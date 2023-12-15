@@ -1,7 +1,7 @@
 package main
 
 import (
-	data "authentication/models"
+	"authentication/data"
 	"database/sql"
 	"fmt"
 	"log"
@@ -16,42 +16,37 @@ import (
 
 const webPort = "80"
 
-var count int64
+var counts int64
 
 type Config struct {
-	DB     *sql.DB
+	DB *sql.DB
 	Models data.Models
 }
 
 func main() {
 	log.Println("Starting authentication service")
 
-	// Connect to DB
-
+	// connect to DB
 	conn := connectToDB()
-
 	if conn == nil {
-		log.Panic("Can't connect to Postgres")
+		log.Panic("Can't connect to Postgres!")
 	}
 
-	// Setup config
-
+	// set up config
 	app := Config{
-		DB:     conn,
+		DB: conn,
 		Models: data.New(conn),
 	}
 
 	srv := &http.Server{
-		Addr:    fmt.Sprintf(":%s", webPort),
+		Addr: fmt.Sprintf(":%s", webPort),
 		Handler: app.routes(),
 	}
 
 	err := srv.ListenAndServe()
-
 	if err != nil {
 		log.Panic(err)
 	}
-
 }
 
 func openDB(dsn string) (*sql.DB, error) {
@@ -73,21 +68,21 @@ func connectToDB() *sql.DB {
 
 	for {
 		connection, err := openDB(dsn)
-
 		if err != nil {
-			log.Printf("Postgres not yet ready...")
-			count++
+			log.Println("Postgres not yet ready ...")
+			counts++
 		} else {
-			log.Println("Connected to Postgres !")
+			log.Println("Connected to Postgres!")
 			return connection
 		}
 
-		if count > 10 {
+		if counts > 10 {
 			log.Println(err)
 			return nil
 		}
 
-		log.Println("Backing off for two seconds..")
+		log.Println("Backing off for two seconds....")
 		time.Sleep(2 * time.Second)
+		continue
 	}
 }
